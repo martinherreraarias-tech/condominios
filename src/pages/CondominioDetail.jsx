@@ -73,6 +73,7 @@ export default function CondominioDetail() {
               <div style={{ display: 'flex', gap: 10 }}>
                 <button className="btn btn--ghost" onClick={() => navigate(`/condominio/${id}/avisos`)}>Avisos →</button>
                 <button className="btn btn--ghost" onClick={() => navigate(`/condominio/${id}/areas`)}>Áreas →</button>
+                <button className="btn btn--ghost" onClick={() => navigate(`/condominio/${id}/notificaciones`)}>Notificaciones →</button>
                 <button className="btn btn--primary" onClick={() => navigate(`/condominio/${id}/cobranza`)}>Cobranza →</button>
               </div>
             </div>

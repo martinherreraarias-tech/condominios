@@ -193,3 +193,7 @@ select.input { appearance: none; -webkit-appearance: none; background-image: url
 .detalle-row { display: flex; justify-content: space-between; font-size: 14px; }
 .detalle-row--tot { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 2px; }
 .btn--block { width: 100%; }
+
+/* ===== Fila de checkbox ===== */
+.check-row { display: flex; align-items: center; gap: 10px; margin: 10px 0 16px; cursor: pointer; font-size: 14px; }
+.check-row input { width: 18px; height: 18px; }

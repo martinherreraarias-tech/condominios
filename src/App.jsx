@@ -11,6 +11,7 @@ import CondominioAvisos from './pages/CondominioAvisos'
 import CondominioAreas from './pages/CondominioAreas'
 import Reservas from './pages/Reservas'
 import Paqueteria from './pages/Paqueteria'
+import CondominioNotificaciones from './pages/CondominioNotificaciones'
 
 function RoleHome() {
   const { role, loading } = useAuth()
@@ -32,6 +33,7 @@ export default function App() {
           <Route path="/condominio/:id/areas" element={<ProtectedRoute><CondominioAreas /></ProtectedRoute>} />
           <Route path="/reservas" element={<ProtectedRoute><Reservas /></ProtectedRoute>} />
           <Route path="/paqueteria" element={<ProtectedRoute><Paqueteria /></ProtectedRoute>} />
+          <Route path="/condominio/:id/notificaciones" element={<ProtectedRoute><CondominioNotificaciones /></ProtectedRoute>} />
           <Route path="/visitas" element={<ProtectedRoute><Visitas /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

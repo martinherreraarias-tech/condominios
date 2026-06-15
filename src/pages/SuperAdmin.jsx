@@ -12,6 +12,7 @@ export default function SuperAdmin() {
   const [showNew, setShowNew] = useState(false)
   const [assignFor, setAssignFor] = useState(null)
   const [showCreateUser, setShowCreateUser] = useState(false)
+  const [showReset, setShowReset] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -84,7 +85,26 @@ export default function SuperAdmin() {
             ))}
           </div>
         )}
+
+        <div className="panel" style={{ marginTop: 24 }}>
+          <div className="panel__head"><span className="panel__title">Zona de demostraciones</span></div>
+          <div style={{ padding: 18, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+            <span className="muted" style={{ fontSize: 14 }}>
+              Borra todos los condominios y usuarios de prueba para empezar una demo desde cero.
+            </span>
+            <button className="btn btn--ghost" onClick={() => setShowReset(true)} style={{ color: '#B23B3B', borderColor: '#B23B3B' }}>
+              Resetear datos
+            </button>
+          </div>
+        </div>
       </div>
+
+      {showReset && (
+        <ConfirmResetModal
+          onClose={() => setShowReset(false)}
+          onDone={(data) => { setShowReset(false); load(); alert(`Datos reseteados. Usuarios borrados: ${data?.usuarios_borrados ?? 0}.`) }}
+        />
+      )}
 
       {showNew && (
         <NewCondominioModal
@@ -305,6 +325,47 @@ function CreateUserModal({ condominios = [], onClose, onCreated }) {
           <button type="submit" className="btn btn--primary" disabled={busy}>{busy ? 'Creando...' : 'Crear usuario'}</button>
         </div>
       </form>
+    </Modal>
+  )
+}
+
+function ConfirmResetModal({ onClose, onDone }) {
+  const [text, setText] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  async function reset() {
+    setBusy(true); setError('')
+    const { data, error } = await supabase.functions.invoke('reset-demo')
+    if (error) {
+      setBusy(false)
+      let msg = error.message
+      try { const b = await error.context.json(); if (b?.error) msg = b.error } catch (_) {}
+      setError(msg); return
+    }
+    setBusy(false)
+    onDone(data)
+  }
+
+  return (
+    <Modal onClose={onClose}>
+      <h2>Resetear datos de demo</h2>
+      <p className="sub">
+        Esto borra <strong>todos los condominios</strong> y <strong>todos los usuarios</strong>
+        (excepto los super admins). Esta acción no se puede deshacer.
+      </p>
+      <div className="field">
+        <label>Para confirmar, escribe BORRAR</label>
+        <input className="input" value={text} onChange={(e) => setText(e.target.value)} placeholder="BORRAR" />
+      </div>
+      {error && <p className="form-error">{error}</p>}
+      <div className="modal__actions">
+        <button className="btn btn--ghost" onClick={onClose}>Cancelar</button>
+        <button className="btn btn--primary" disabled={busy || text !== 'BORRAR'} onClick={reset}
+          style={text === 'BORRAR' ? { background: '#B23B3B', borderColor: '#B23B3B' } : undefined}>
+          {busy ? 'Borrando…' : 'Borrar todo'}
+        </button>
+      </div>
     </Modal>
   )
 }
