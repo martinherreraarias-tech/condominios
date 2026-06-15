@@ -16,12 +16,13 @@ export default function ResidentHome() {
   const [upFor, setUpFor] = useState(null)
   const [avisos, setAvisos] = useState([])
   const [paquetes, setPaquetes] = useState([])
+  const [detalleFor, setDetalleFor] = useState(null)
 
   async function load() {
     setLoading(true)
     // RLS sólo devuelve las cuotas de la unidad del residente
     const { data: cu } = await supabase
-      .from('cuotas').select('id, unidad_id, condominio_id, periodo, monto, recargo, estado, fecha_vencimiento, concepto, recibo_id, recibos_servicio(imagen_url)')
+      .from('cuotas').select('id, unidad_id, condominio_id, periodo, monto, recargo, estado, fecha_vencimiento, concepto, recibo_id, recibos_servicio(imagen_url, monto, periodo, detalle)')
       .order('periodo', { ascending: false })
 
     const unidadIds = [...new Set((cu ?? []).map((c) => c.unidad_id))]
@@ -101,8 +102,8 @@ export default function ResidentHome() {
                     <div className="list-item__name">{units[c.unidad_id] || 'Unidad'} · {c.concepto}</div>
                     <div className="list-item__sub">{money(total)} · {c.periodo} · vence {c.fecha_vencimiento || '—'}</div>
                   </div>
-                  {c.recibos_servicio?.imagen_url && (
-                    <button className="link-btn" onClick={() => verRecibo(c.recibos_servicio.imagen_url)}>Ver recibo</button>
+                  {c.recibo_id && (
+                    <button className="icon-btn" title="Detalle del cobro" onClick={() => setDetalleFor(c)}>ⓘ</button>
                   )}
                   {c.estado === 'pagada' ? (
                     <span className="pill pill--ok">Pagada</span>
@@ -154,6 +155,10 @@ export default function ResidentHome() {
           </section>
         )}
       </div>
+
+      {detalleFor && (
+        <DetalleCobroModal cuota={detalleFor} onVerRecibo={verRecibo} onClose={() => setDetalleFor(null)} />
+      )}
 
       {upFor && (
         <UploadModal
@@ -210,6 +215,38 @@ function UploadModal({ cuota, userId, onClose, onDone }) {
           <button type="submit" className="btn btn--primary" disabled={busy}>{busy ? 'Enviando…' : 'Enviar comprobante'}</button>
         </div>
       </form>
+    </Modal>
+  )
+}
+
+function DetalleCobroModal({ cuota, onVerRecibo, onClose }) {
+  const r = cuota.recibos_servicio
+  const d = r?.detalle
+  const total = Number(cuota.monto) + Number(cuota.recargo)
+  return (
+    <Modal onClose={onClose}>
+      <h2>Detalle del cobro</h2>
+      <p className="sub">{cuota.concepto} · {cuota.periodo}</p>
+      {d ? (
+        <div className="detalle-box">
+          <div className="detalle-row"><span>Recibo total</span><strong>{money(d.total)}</strong></div>
+          <div className="detalle-row"><span>Residencias que pagan</span><span>{(d.activas || 0) + (d.inactivas || 0)} de {d.residencias}</span></div>
+          <div className="detalle-row"><span>Activas (100%)</span><span>{d.activas} · {money(d.per_activa)} c/u</span></div>
+          {d.inactivas > 0 && (
+            <div className="detalle-row"><span>Inactivas ({d.pct_inactivo}%)</span><span>{d.inactivas} · {money(d.per_inactiva)} c/u</span></div>
+          )}
+          {d.excluidas > 0 && <div className="detalle-row"><span>Excluidas</span><span>{d.excluidas}</span></div>}
+          <div className="detalle-row detalle-row--tot"><span>Tu cobro</span><strong>{money(total)}</strong></div>
+        </div>
+      ) : (
+        <p className="muted" style={{ marginBottom: 14 }}>Tu cobro de {money(total)} no tiene desglose de cálculo.</p>
+      )}
+      {r?.imagen_url && (
+        <button className="btn btn--ghost btn--block" onClick={() => onVerRecibo(r.imagen_url)}>Ver foto del recibo</button>
+      )}
+      <div className="modal__actions">
+        <button className="btn btn--primary" onClick={onClose}>Cerrar</button>
+      </div>
     </Modal>
   )
 }

@@ -29,6 +29,7 @@ export default function CondominioCobranza() {
   const [generating, setGenerating] = useState(false)
   const [payFor, setPayFor] = useState(null)
   const [showServicio, setShowServicio] = useState(false)
+  const [editCuota, setEditCuota] = useState(null)
 
   async function load() {
     setLoading(true)
@@ -82,6 +83,12 @@ export default function CondominioCobranza() {
       .update({ estado: nuevoEstado, revisado_por: profile?.id || null, revisado_at: new Date().toISOString() })
       .eq('id', pagoId)
     load()
+  }
+
+  async function borrarCuota(c) {
+    if (!window.confirm(`¿Borrar el cobro "${c.concepto}" de esta unidad? Se eliminarán sus pagos.`)) return
+    const { error } = await supabase.from('cuotas').delete().eq('id', c.id)
+    if (error) alert('No se pudo borrar: ' + error.message); else load()
   }
 
   async function verComprobante(path) {
@@ -192,6 +199,8 @@ export default function CondominioCobranza() {
                     {c.estado !== 'pagada' && (
                       <button className="link-btn" onClick={() => setPayFor(c)}>Registrar pago</button>
                     )}
+                    <button className="link-btn" onClick={() => setEditCuota(c)}>Editar</button>
+                    <button className="link-btn link-btn--danger" onClick={() => borrarCuota(c)}>Borrar</button>
                   </div>
                 )
               })
@@ -203,6 +212,13 @@ export default function CondominioCobranza() {
         <ServicioCobroModal
           condominioId={id} periodoInicial={periodo} units={units}
           onClose={() => setShowServicio(false)} onSaved={() => { setShowServicio(false); load() }}
+        />
+      )}
+
+      {editCuota && (
+        <EditCuotaModal
+          cuota={editCuota} unidad={unitById[editCuota.unidad_id]}
+          onClose={() => setEditCuota(null)} onSaved={() => { setEditCuota(null); load() }}
         />
       )}
 
@@ -333,6 +349,13 @@ function ServicioCobroModal({ condominioId, periodoInicial, units, onClose, onSa
         .insert({
           condominio_id: condominioId, servicio_id: servicioId, periodo,
           monto: Number(montoTotal), fecha_vencimiento: vencimiento || null, imagen_url: imagenUrl,
+          detalle: {
+            total: Number(montoTotal), residencias: units.length,
+            activas: nActivas, inactivas: nInactivas, excluidas: nExcluidas,
+            pct_inactivo: Number(pctInactivo) || 0,
+            per_activa: Math.round(perActiva * 100) / 100,
+            per_inactiva: Math.round(perInactiva * 100) / 100,
+          },
         }).select('id').single()
       if (rErr) throw rErr
 
@@ -405,6 +428,55 @@ function ServicioCobroModal({ condominioId, periodoInicial, units, onClose, onSa
         <div className="modal__actions">
           <button type="button" className="btn btn--ghost" onClick={onClose}>Cancelar</button>
           <button type="submit" className="btn btn--primary" disabled={busy}>{busy ? 'Guardando…' : 'Generar cobro'}</button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+function EditCuotaModal({ cuota, unidad, onClose, onSaved }) {
+  const [concepto, setConcepto] = useState(cuota.concepto || '')
+  const [monto, setMonto] = useState(String(cuota.monto))
+  const [recargo, setRecargo] = useState(String(cuota.recargo || 0))
+  const [venc, setVenc] = useState(cuota.fecha_vencimiento || '')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  async function submit(e) {
+    e.preventDefault()
+    if (!(Number(monto) >= 0)) { setError('El monto no es válido.'); return }
+    setBusy(true); setError('')
+    const { error } = await supabase.from('cuotas').update({
+      concepto: concepto.trim() || cuota.concepto,
+      monto: Number(monto), recargo: Number(recargo) || 0,
+      fecha_vencimiento: venc || null,
+    }).eq('id', cuota.id)
+    setBusy(false)
+    if (error) setError(error.message); else onSaved()
+  }
+
+  return (
+    <Modal onClose={onClose}>
+      <h2>Editar cobro</h2>
+      <p className="sub">{unidad?.identificador} · {cuota.periodo}</p>
+      <form onSubmit={submit}>
+        <div className="field"><label>Concepto</label>
+          <input className="input" value={concepto} onChange={(e) => setConcepto(e.target.value)} /></div>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div className="field" style={{ flex: 1 }}><label>Monto</label>
+            <input className="input" type="number" min="0" step="0.01" value={monto} onChange={(e) => setMonto(e.target.value)} required /></div>
+          <div className="field" style={{ flex: 1 }}><label>Recargo</label>
+            <input className="input" type="number" min="0" step="0.01" value={recargo} onChange={(e) => setRecargo(e.target.value)} /></div>
+        </div>
+        <div className="field"><label>Vence</label>
+          <input className="input" type="date" value={venc} onChange={(e) => setVenc(e.target.value)} /></div>
+        <p className="muted" style={{ fontSize: 13, marginTop: -4, marginBottom: 12 }}>
+          Si ya había pagos, revisa que el estado siga siendo correcto.
+        </p>
+        {error && <p className="form-error">{error}</p>}
+        <div className="modal__actions">
+          <button type="button" className="btn btn--ghost" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="btn btn--primary" disabled={busy}>{busy ? 'Guardando…' : 'Guardar'}</button>
         </div>
       </form>
     </Modal>

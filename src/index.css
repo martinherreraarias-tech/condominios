@@ -185,3 +185,11 @@ select.input { appearance: none; -webkit-appearance: none; background-image: url
 
 /* ===== Cobro de servicio (resumen reparto) ===== */
 .reparto-resumen { display: flex; justify-content: space-between; align-items: center; margin: 12px 0; font-size: 14px; padding: 10px 14px; background: var(--bg); border-radius: var(--radius); }
+
+/* ===== Detalle del cobro (vecino) ===== */
+.icon-btn { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); background: #fff; color: var(--brand-600); font-size: 15px; line-height: 1; cursor: pointer; }
+.icon-btn:hover { background: var(--brand-tint); }
+.detalle-box { display: grid; gap: 8px; margin: 8px 0 16px; }
+.detalle-row { display: flex; justify-content: space-between; font-size: 14px; }
+.detalle-row--tot { border-top: 1px solid var(--line); padding-top: 8px; margin-top: 2px; }
+.btn--block { width: 100%; }
