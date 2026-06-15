@@ -197,7 +197,7 @@ export default function CondominioCobranza() {
                     </div>
                     <span className={`pill ${ev.cls}`}>{ev.txt}</span>
                     {c.estado !== 'pagada' && (
-                      <button className="link-btn" onClick={() => setPayFor(c)}>Registrar pago</button>
+                      <button className="link-btn" onClick={() => setPayFor(c)}>Pago manual</button>
                     )}
                     <button className="link-btn" onClick={() => setEditCuota(c)}>Editar</button>
                     <button className="link-btn link-btn--danger" onClick={() => borrarCuota(c)}>Borrar</button>
@@ -261,10 +261,12 @@ function PaymentModal({ condominioId, cuota, yaPagado, unidad, registradoPor, on
 
   return (
     <Modal onClose={onClose}>
-      <h2>Registrar pago</h2>
+      <h2>Registrar pago manual</h2>
       <p className="sub">{unidad?.identificador} · restante {money(restante)}</p>
       <p className="muted" style={{ fontSize: 13, marginTop: -8, marginBottom: 14 }}>
-        Como administrador, este pago se registra ya aprobado.
+        Úsalo solo para pagos en efectivo o en ventanilla. Los pagos por transferencia
+        normalmente los sube el residente como comprobante para tu revisión, en el panel
+        de "Pagos por revisar". Este pago manual queda aprobado de inmediato.
       </p>
       <form onSubmit={submit}>
         <div className="field"><label>Monto</label>
