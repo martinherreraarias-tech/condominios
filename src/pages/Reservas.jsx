@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase'
 const fmtFecha = (f) => new Date(f + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' })
 const hhmm = (t) => (t || '').slice(0, 5)
 const today = () => new Date().toISOString().slice(0, 10)
+const money = (n) => '$' + Number(n || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })
 
 export default function Reservas() {
   const { user, memberships, profile, signOut } = useAuth()
@@ -19,7 +20,7 @@ export default function Reservas() {
 
   async function loadAreas() {
     setLoading(true)
-    const { data } = await supabase.from('areas_comunes').select('id, nombre, descripcion, capacidad')
+    const { data } = await supabase.from('areas_comunes').select('id, nombre, descripcion, capacidad, costo_uso, dias_repetibilidad, permite_con_adeudo')
       .eq('condominio_id', m.condominio_id).eq('activa', true).order('nombre')
     setAreas(data ?? [])
     setLoading(false)
@@ -159,6 +160,13 @@ function ReservaForm({ area, condominioId, unidadId, solicitanteId, onReserved }
 
   return (
     <form onSubmit={submit} style={{ marginTop: 14, borderTop: '1px solid var(--line)', paddingTop: 14 }}>
+      {(Number(area?.costo_uso) > 0 || area?.dias_repetibilidad > 0 || area?.permite_con_adeudo === false) && (
+        <div className="reglas-info">
+          {Number(area?.costo_uso) > 0 && <div>Costo de uso: <strong>{money(area.costo_uso)}</strong></div>}
+          {area?.dias_repetibilidad > 0 && <div>Máximo una reserva cada {area.dias_repetibilidad} días.</div>}
+          {area?.permite_con_adeudo === false && <div>No disponible si tienes adeudos vencidos.</div>}
+        </div>
+      )}
       <div className="field"><label>Fecha</label>
         <input className="input" type="date" min={today()} value={fecha} onChange={(e) => setFecha(e.target.value)} required /></div>
       <div style={{ display: 'flex', gap: 12 }}>
