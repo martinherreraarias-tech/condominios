@@ -15,6 +15,7 @@ export default function ResidentHome() {
   const [loading, setLoading] = useState(true)
   const [upFor, setUpFor] = useState(null)
   const [avisos, setAvisos] = useState([])
+  const [paquetes, setPaquetes] = useState([])
 
   async function load() {
     setLoading(true)
@@ -46,6 +47,10 @@ export default function ResidentHome() {
       .or(`expira_at.is.null,expira_at.gt.${nowIso}`)
       .order('created_at', { ascending: false }).limit(8)
     setAvisos(av ?? [])
+    const { data: pq } = await supabase.from('paquetes')
+      .select('id, descripcion, paqueteria, estado, recibido_at')
+      .order('recibido_at', { ascending: false }).limit(10)
+    setPaquetes(pq ?? [])
     setCuotas(cu ?? []); setUnits(unitMap); setApprovedByCuota(approved); setPendingCuotas(pending); setLoading(false)
   }
 
@@ -118,6 +123,23 @@ export default function ResidentHome() {
                   <span className="aviso__date">{new Date(a.created_at).toLocaleDateString('es-MX')}</span>
                 </div>
                 <div className="aviso__body">{a.cuerpo}</div>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {paquetes.length > 0 && (
+          <section className="panel">
+            <div className="panel__head"><span className="panel__title">Paquetería</span></div>
+            {paquetes.map((p) => (
+              <div className="list-item" key={p.id}>
+                <div className="list-item__main">
+                  <div className="list-item__name">{p.descripcion}</div>
+                  <div className="list-item__sub">{p.paqueteria ? p.paqueteria + ' · ' : ''}{new Date(p.recibido_at).toLocaleDateString('es-MX')}</div>
+                </div>
+                <span className={`pill ${p.estado === 'en_caseta' ? 'pill--accent' : 'pill--ok'}`}>
+                  {p.estado === 'en_caseta' ? 'En caseta' : 'Entregado'}
+                </span>
               </div>
             ))}
           </section>

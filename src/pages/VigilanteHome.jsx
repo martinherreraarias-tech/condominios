@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Html5QrcodeScanner } from 'html5-qrcode'
 import { useAuth } from '../context/AuthContext'
 import { supabase } from '../lib/supabase'
 
 export default function VigilanteHome() {
   const { profile, memberships, signOut } = useAuth()
+  const navigate = useNavigate()
   const condominioId = memberships[0]?.condominio_id
   const [code, setCode] = useState('')
   const [scanning, setScanning] = useState(false)
@@ -73,6 +75,7 @@ export default function VigilanteHome() {
             <h1 className="page-title">Control de acceso</h1>
             <p className="page-sub">Escanea el QR del visitante o teclea su código.</p>
           </div>
+          <button className="btn btn--ghost" onClick={() => navigate('/paqueteria')}>Paquetería →</button>
         </div>
 
         {result && (
