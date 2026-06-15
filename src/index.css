@@ -166,3 +166,11 @@ select.input { appearance: none; -webkit-appearance: none; background-image: url
 .brand-credit { position: absolute; left: 56px; bottom: 26px; color: #8FB3A8; font-size: 13px; letter-spacing: .2px; }
 .brand-credit strong { color: #DCEAE4; font-weight: 600; }
 .auth-credit { margin-top: 22px; text-align: center; color: var(--muted); font-size: 12px; }
+
+/* ===== Avisos ===== */
+.aviso { padding: 14px 18px; border-bottom: 1px solid var(--line); }
+.aviso:last-child { border-bottom: none; }
+.aviso__head { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+.aviso__title { font-weight: 600; }
+.aviso__date { font-size: 12px; color: var(--muted); margin-left: auto; }
+.aviso__body { color: var(--ink); font-size: 14px; white-space: pre-wrap; line-height: 1.5; }

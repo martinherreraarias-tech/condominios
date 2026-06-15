@@ -10,6 +10,14 @@ export default function VigilanteHome() {
   const [scanning, setScanning] = useState(false)
   const [busy, setBusy] = useState(false)
   const [result, setResult] = useState(null)
+  const [avisos, setAvisos] = useState([])
+
+  useEffect(() => {
+    if (!condominioId) return
+    supabase.from('avisos').select('id, titulo, cuerpo, audiencia, created_at')
+      .order('created_at', { ascending: false }).limit(8)
+      .then(({ data }) => setAvisos(data ?? []))
+  }, [condominioId])
 
   async function validar(raw) {
     const token = (raw || '').trim().toUpperCase()
@@ -98,6 +106,24 @@ export default function VigilanteHome() {
         {scanning && (
           <section className="panel" style={{ padding: 14 }}>
             <Scanner onResult={(text) => { setScanning(false); validar(text) }} />
+          </section>
+        )}
+
+        {avisos.length > 0 && (
+          <section className="panel">
+            <div className="panel__head"><span className="panel__title">Avisos</span></div>
+            {avisos.map((a) => (
+              <div className="aviso" key={a.id}>
+                <div className="aviso__head">
+                  <span className="aviso__title">{a.titulo}</span>
+                  <span className={`pill ${a.audiencia === 'vigilancia' ? 'pill--accent' : 'pill--brand'}`}>
+                    {a.audiencia === 'vigilancia' ? 'Vigilancia' : 'Comunidad'}
+                  </span>
+                  <span className="aviso__date">{new Date(a.created_at).toLocaleDateString('es-MX')}</span>
+                </div>
+                <div className="aviso__body">{a.cuerpo}</div>
+              </div>
+            ))}
           </section>
         )}
       </div>

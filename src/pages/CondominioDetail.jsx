@@ -70,7 +70,10 @@ export default function CondominioDetail() {
                 <h1 className="page-title">{cond.nombre}</h1>
                 <p className="page-sub">{cond.direccion || 'Sin dirección'}</p>
               </div>
-              <button className="btn btn--primary" onClick={() => navigate(`/condominio/${id}/cobranza`)}>Cobranza →</button>
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button className="btn btn--ghost" onClick={() => navigate(`/condominio/${id}/avisos`)}>Avisos →</button>
+                <button className="btn btn--primary" onClick={() => navigate(`/condominio/${id}/cobranza`)}>Cobranza →</button>
+              </div>
             </div>
 
             <section className="panel">
