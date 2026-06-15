@@ -40,8 +40,10 @@ export default function ResidentHome() {
       })
     }
 
+    const nowIso = new Date().toISOString()
     const { data: av } = await supabase.from('avisos')
-      .select('id, titulo, cuerpo, created_at')
+      .select('id, titulo, cuerpo, created_at, expira_at')
+      .or(`expira_at.is.null,expira_at.gt.${nowIso}`)
       .order('created_at', { ascending: false }).limit(8)
     setAvisos(av ?? [])
     setCuotas(cu ?? []); setUnits(unitMap); setApprovedByCuota(approved); setPendingCuotas(pending); setLoading(false)

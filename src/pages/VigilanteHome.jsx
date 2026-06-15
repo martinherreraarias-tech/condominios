@@ -14,7 +14,9 @@ export default function VigilanteHome() {
 
   useEffect(() => {
     if (!condominioId) return
-    supabase.from('avisos').select('id, titulo, cuerpo, audiencia, created_at')
+    const nowIso = new Date().toISOString()
+    supabase.from('avisos').select('id, titulo, cuerpo, audiencia, created_at, expira_at')
+      .or(`expira_at.is.null,expira_at.gt.${nowIso}`)
       .order('created_at', { ascending: false }).limit(8)
       .then(({ data }) => setAvisos(data ?? []))
   }, [condominioId])
