@@ -21,7 +21,7 @@ export default function ResidentHome() {
     setLoading(true)
     // RLS sólo devuelve las cuotas de la unidad del residente
     const { data: cu } = await supabase
-      .from('cuotas').select('id, unidad_id, condominio_id, periodo, monto, recargo, estado, fecha_vencimiento')
+      .from('cuotas').select('id, unidad_id, condominio_id, periodo, monto, recargo, estado, fecha_vencimiento, concepto, recibo_id, recibos_servicio(imagen_url)')
       .order('periodo', { ascending: false })
 
     const unidadIds = [...new Set((cu ?? []).map((c) => c.unidad_id))]
@@ -55,6 +55,12 @@ export default function ResidentHome() {
   }
 
   useEffect(() => { load() }, [])
+
+  async function verRecibo(path) {
+    const { data } = await supabase.storage.from('recibos').createSignedUrl(path, 120)
+    if (data?.signedUrl) window.open(data.signedUrl, '_blank')
+    else alert('No se pudo abrir el recibo.')
+  }
 
   return (
     <div className="app">
@@ -92,9 +98,12 @@ export default function ResidentHome() {
               return (
                 <div className="list-item" key={c.id}>
                   <div className="list-item__main">
-                    <div className="list-item__name">{units[c.unidad_id] || 'Unidad'} · {c.periodo}</div>
-                    <div className="list-item__sub">{money(total)} · vence {c.fecha_vencimiento || '—'}</div>
+                    <div className="list-item__name">{units[c.unidad_id] || 'Unidad'} · {c.concepto}</div>
+                    <div className="list-item__sub">{money(total)} · {c.periodo} · vence {c.fecha_vencimiento || '—'}</div>
                   </div>
+                  {c.recibos_servicio?.imagen_url && (
+                    <button className="link-btn" onClick={() => verRecibo(c.recibos_servicio.imagen_url)}>Ver recibo</button>
+                  )}
                   {c.estado === 'pagada' ? (
                     <span className="pill pill--ok">Pagada</span>
                   ) : enRevision ? (
