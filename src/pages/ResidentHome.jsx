@@ -66,7 +66,10 @@ export default function ResidentHome() {
             <h1 className="page-title">Mis cuotas</h1>
             <p className="page-sub">Consulta tus cuotas y sube tu comprobante de pago.</p>
           </div>
-          <button className="btn btn--ghost" onClick={() => navigate('/visitas')}>Mis visitas →</button>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button className="btn btn--ghost" onClick={() => navigate('/reservas')}>Reservar →</button>
+            <button className="btn btn--ghost" onClick={() => navigate('/visitas')}>Mis visitas →</button>
+          </div>
         </div>
 
         <section className="panel">

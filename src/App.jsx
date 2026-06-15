@@ -8,6 +8,8 @@ import CondominioDetail from './pages/CondominioDetail'
 import CondominioCobranza from './pages/CondominioCobranza'
 import Visitas from './pages/Visitas'
 import CondominioAvisos from './pages/CondominioAvisos'
+import CondominioAreas from './pages/CondominioAreas'
+import Reservas from './pages/Reservas'
 
 function RoleHome() {
   const { role, loading } = useAuth()
@@ -26,6 +28,8 @@ export default function App() {
           <Route path="/condominio/:id" element={<ProtectedRoute><CondominioDetail /></ProtectedRoute>} />
           <Route path="/condominio/:id/cobranza" element={<ProtectedRoute><CondominioCobranza /></ProtectedRoute>} />
           <Route path="/condominio/:id/avisos" element={<ProtectedRoute><CondominioAvisos /></ProtectedRoute>} />
+          <Route path="/condominio/:id/areas" element={<ProtectedRoute><CondominioAreas /></ProtectedRoute>} />
+          <Route path="/reservas" element={<ProtectedRoute><Reservas /></ProtectedRoute>} />
           <Route path="/visitas" element={<ProtectedRoute><Visitas /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
