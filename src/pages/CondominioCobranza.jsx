@@ -278,44 +278,37 @@ function ServicioCobroModal({ condominioId, periodoInicial, units, onClose, onSa
   const [montoTotal, setMontoTotal] = useState('')
   const [vencimiento, setVencimiento] = useState(lastDayOf(periodoInicial))
   const [file, setFile] = useState(null)
-  const [incluidos, setIncluidos] = useState(() => new Set(units.map((u) => u.id)))
-  const [montos, setMontos] = useState({})
+  const [pctInactivo, setPctInactivo] = useState('50')
+  const [estados, setEstados] = useState(() => Object.fromEntries(units.map((u) => [u.id, 'activa'])))
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
-  const incluidosArr = units.filter((u) => incluidos.has(u.id))
-  const asignado = incluidosArr.reduce((s, u) => s + (Number(montos[u.id]) || 0), 0)
-  const diferencia = (Number(montoTotal) || 0) - asignado
+  const pct = Math.min(Math.max(Number(pctInactivo) || 0, 0), 100) / 100
+  const peso = (st) => (st === 'activa' ? 1 : st === 'inactiva' ? pct : 0)
+  const totalPeso = units.reduce((s, u) => s + peso(estados[u.id]), 0)
+  const base = totalPeso > 0 ? (Number(montoTotal) || 0) / totalPeso : 0
+  const montoDe = (u) => Math.round(base * peso(estados[u.id]) * 100) / 100
 
-  function toggleIncluir(uId) {
-    setIncluidos((prev) => {
-      const next = new Set(prev)
-      if (next.has(uId)) next.delete(uId); else next.add(uId)
-      return next
-    })
-  }
-  function setMonto(uId, val) { setMontos((prev) => ({ ...prev, [uId]: val })) }
+  const nActivas = units.filter((u) => estados[u.id] === 'activa').length
+  const nInactivas = units.filter((u) => estados[u.id] === 'inactiva').length
+  const nExcluidas = units.filter((u) => estados[u.id] === 'excluida').length
+  const perActiva = base * 1
+  const perInactiva = base * pct
+  const sumaRepartida = units.reduce((s, u) => s + montoDe(u), 0)
 
-  function repartirEquitativo() {
-    const inc = units.filter((u) => incluidos.has(u.id))
-    if (!inc.length || !(Number(montoTotal) > 0)) return
-    const each = (Number(montoTotal) / inc.length)
-    const next = {}
-    inc.forEach((u) => { next[u.id] = each.toFixed(2) })
-    setMontos(next)
-  }
+  function setEstado(uId, st) { setEstados((prev) => ({ ...prev, [uId]: st })) }
+  function todasActivas() { setEstados(Object.fromEntries(units.map((u) => [u.id, 'activa']))) }
 
   async function submit(e) {
     e.preventDefault()
     setError('')
     if (!concepto.trim()) { setError('Escribe el concepto (ej. Luz).'); return }
     if (!(Number(montoTotal) > 0)) { setError('Captura el monto total del recibo.'); return }
-    const filas = incluidosArr.filter((u) => Number(montos[u.id]) > 0)
-    if (filas.length === 0) { setError('Asigna monto al menos a una unidad.'); return }
+    const filas = units.filter((u) => montoDe(u) > 0)
+    if (filas.length === 0) { setError('Marca al menos una residencia que pague.'); return }
 
     setBusy(true)
     try {
-      // 1) servicio (buscar o crear por nombre)
       let servicioId
       const { data: serv } = await supabase.from('servicios').select('id')
         .eq('condominio_id', condominioId).eq('nombre', concepto.trim()).maybeSingle()
@@ -327,7 +320,6 @@ function ServicioCobroModal({ condominioId, periodoInicial, units, onClose, onSa
         servicioId = nuevo.id
       }
 
-      // 2) subir foto del recibo (opcional)
       let imagenUrl = null
       if (file) {
         const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_')
@@ -337,7 +329,6 @@ function ServicioCobroModal({ condominioId, periodoInicial, units, onClose, onSa
         imagenUrl = path
       }
 
-      // 3) recibo de servicio
       const { data: recibo, error: rErr } = await supabase.from('recibos_servicio')
         .insert({
           condominio_id: condominioId, servicio_id: servicioId, periodo,
@@ -345,10 +336,9 @@ function ServicioCobroModal({ condominioId, periodoInicial, units, onClose, onSa
         }).select('id').single()
       if (rErr) throw rErr
 
-      // 4) cuotas por unidad
       const rows = filas.map((u) => ({
         condominio_id: condominioId, unidad_id: u.id, periodo, concepto: concepto.trim(),
-        monto: Number(montos[u.id]), fecha_vencimiento: vencimiento || null, recibo_id: recibo.id,
+        monto: montoDe(u), fecha_vencimiento: vencimiento || null, recibo_id: recibo.id,
       }))
       const { error: cErr } = await supabase.from('cuotas')
         .upsert(rows, { onConflict: 'condominio_id,unidad_id,periodo,concepto' })
@@ -365,7 +355,7 @@ function ServicioCobroModal({ condominioId, periodoInicial, units, onClose, onSa
   return (
     <Modal onClose={onClose}>
       <h2>Cobro de servicio</h2>
-      <p className="sub">Reparte un recibo entre las unidades. Tú ajustas quién paga y cuánto.</p>
+      <p className="sub">Reparte el recibo completo: las activas cubren lo que las inactivas no pagan.</p>
       <form onSubmit={submit}>
         <div style={{ display: 'flex', gap: 12 }}>
           <div className="field" style={{ flex: 1 }}><label>Concepto</label>
@@ -375,7 +365,9 @@ function ServicioCobroModal({ condominioId, periodoInicial, units, onClose, onSa
         </div>
         <div style={{ display: 'flex', gap: 12 }}>
           <div className="field" style={{ flex: 1 }}><label>Monto total del recibo</label>
-            <input className="input" type="number" min="0" step="0.01" value={montoTotal} onChange={(e) => setMontoTotal(e.target.value)} placeholder="ej. 1000" required /></div>
+            <input className="input" type="number" min="0" step="0.01" value={montoTotal} onChange={(e) => setMontoTotal(e.target.value)} placeholder="ej. 5000" required /></div>
+          <div className="field" style={{ width: 130 }}><label>% para inactivas</label>
+            <input className="input" type="number" min="0" max="100" value={pctInactivo} onChange={(e) => setPctInactivo(e.target.value)} placeholder="50" /></div>
           <div className="field" style={{ flex: 1 }}><label>Vence</label>
             <input className="input" type="date" value={vencimiento} onChange={(e) => setVencimiento(e.target.value)} /></div>
         </div>
@@ -383,29 +375,29 @@ function ServicioCobroModal({ condominioId, periodoInicial, units, onClose, onSa
           <input className="input" type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] || null)} /></div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '6px 0 8px' }}>
-          <span style={{ fontWeight: 600 }}>Reparto por unidad</span>
-          <button type="button" className="btn btn--ghost" onClick={repartirEquitativo}>Reparto equitativo</button>
+          <span style={{ fontWeight: 600 }}>Estado de cada residencia</span>
+          <button type="button" className="btn btn--ghost" onClick={todasActivas}>Todas activas</button>
         </div>
 
         <div style={{ maxHeight: 240, overflowY: 'auto', border: '1px solid var(--line)', borderRadius: 'var(--radius)' }}>
-          {units.map((u) => {
-            const inc = incluidos.has(u.id)
-            return (
-              <div className="list-item" key={u.id} style={{ opacity: inc ? 1 : 0.5 }}>
-                <input type="checkbox" checked={inc} onChange={() => toggleIncluir(u.id)} style={{ width: 18, height: 18 }} />
-                <div className="list-item__main"><div className="list-item__name">{u.identificador}</div></div>
-                <input className="input" type="number" min="0" step="0.01" style={{ width: 110 }}
-                  value={montos[u.id] ?? ''} disabled={!inc}
-                  onChange={(e) => setMonto(u.id, e.target.value)} placeholder="0.00" />
-              </div>
-            )
-          })}
+          {units.map((u) => (
+            <div className="list-item" key={u.id}>
+              <div className="list-item__main"><div className="list-item__name">{u.identificador}</div></div>
+              <span className="muted" style={{ fontSize: 13, minWidth: 78, textAlign: 'right' }}>{money(montoDe(u))}</span>
+              <select className="input" style={{ width: 150 }} value={estados[u.id]} onChange={(e) => setEstado(u.id, e.target.value)}>
+                <option value="activa">Activa (100%)</option>
+                <option value="inactiva">Inactiva ({pctInactivo || 0}%)</option>
+                <option value="excluida">Excluida</option>
+              </select>
+            </div>
+          ))}
         </div>
 
-        <div className="reparto-resumen">
-          <span>Asignado: <strong>{money(asignado)}</strong> de {money(montoTotal)}</span>
-          <span style={{ color: Math.abs(diferencia) < 0.01 ? 'var(--brand-700)' : '#B23B3B' }}>
-            {Math.abs(diferencia) < 0.01 ? 'Cuadra exacto' : `Diferencia: ${money(diferencia)}`}
+        <div className="reparto-resumen" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 4 }}>
+          <span>Residencias: <strong>{units.length}</strong> · Activas: {nActivas} · Inactivas: {nInactivas} ({pctInactivo || 0}%) · Excluidas: {nExcluidas}</span>
+          <span>Cada activa: <strong>{money(perActiva)}</strong> · Cada inactiva: <strong>{money(perInactiva)}</strong></span>
+          <span style={{ color: Math.abs(sumaRepartida - (Number(montoTotal) || 0)) < 0.05 ? 'var(--brand-700)' : '#B23B3B' }}>
+            Suma repartida: {money(sumaRepartida)} de {money(montoTotal)}
           </span>
         </div>
 
