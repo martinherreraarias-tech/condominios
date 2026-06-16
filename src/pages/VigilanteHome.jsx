@@ -45,6 +45,17 @@ export default function VigilanteHome() {
     })
     await supabase.from('visitas').update({ estado: newEstado }).eq('id', v.id)
 
+    // Notificar por correo al anfitrión cuando entra su visita
+    if (action === 'entrada' && v.anfitrion_id) {
+      supabase.functions.invoke('enviar-correo', {
+        body: {
+          user_ids: [v.anfitrion_id],
+          asunto: 'Tu visita llegó',
+          mensaje: (v.nombre_visitante || 'Tu visita') + ' acaba de registrar entrada en caseta.',
+        },
+      }).catch(() => {})
+    }
+
     let unidad = null, host = null
     if (v.unidad_id) {
       const { data } = await supabase.from('unidades').select('identificador').eq('id', v.unidad_id).maybeSingle()

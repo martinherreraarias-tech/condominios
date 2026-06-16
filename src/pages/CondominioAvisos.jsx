@@ -111,8 +111,18 @@ function NewAvisoModal({ condominioId, autorId, onClose, onCreated }) {
       audiencia, autor_id: autorId || null, expira_at,
     })
     setBusy(false)
-    if (error) setError(error.message)
-    else onCreated()
+    if (error) { setError(error.message); return }
+    // Avisos a comunidad: notificar por correo a los residentes
+    if (audiencia === 'comunidad') {
+      supabase.functions.invoke('enviar-correo', {
+        body: {
+          condominio_id: condominioId,
+          asunto: 'Nuevo aviso: ' + titulo.trim(),
+          mensaje: titulo.trim() + '\n\n' + cuerpo.trim(),
+        },
+      }).catch(() => {})
+    }
+    onCreated()
   }
 
   return (

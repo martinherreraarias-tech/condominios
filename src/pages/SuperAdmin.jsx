@@ -247,7 +247,7 @@ function CreateUserModal({ condominios = [], onClose, onCreated }) {
     if (rol && !condominioId) { setError('Elige un condominio para el rol seleccionado.'); return }
     setBusy(true); setError('')
     const { data, error } = await supabase.functions.invoke('crear-usuario', {
-      body: { email: email.trim(), nombre: nombre.trim() },
+      body: { email: email.trim(), nombre: nombre.trim(), redirect_to: window.location.origin + '/establecer-password' },
     })
     if (error) {
       setBusy(false)
@@ -276,12 +276,10 @@ function CreateUserModal({ condominios = [], onClose, onCreated }) {
   if (result) {
     return (
       <Modal onClose={onClose}>
-        <h2>Usuario creado</h2>
-        <p className="sub">Comparte estos datos. La contraseña solo se muestra una vez; al entrar, la persona deberá cambiarla.</p>
+        <h2>Invitación enviada</h2>
+        <p className="sub">Le enviamos un correo de invitación a la persona. Al abrirlo, confirmará su correo y creará su propia contraseña para entrar.</p>
         <div className="field"><label>Correo</label><input className="input" readOnly value={result.email} /></div>
-        <div className="field"><label>Contraseña temporal</label><input className="input" readOnly value={result.tempPassword} /></div>
         <div className="modal__actions">
-          <button className="btn btn--ghost" onClick={() => navigator.clipboard?.writeText('Correo: ' + result.email + ' | Contrasena: ' + result.tempPassword)}>Copiar</button>
           <button className="btn btn--primary" onClick={onClose}>Listo</button>
         </div>
       </Modal>
@@ -291,7 +289,7 @@ function CreateUserModal({ condominios = [], onClose, onCreated }) {
   return (
     <Modal onClose={onClose}>
       <h2>Crear usuario</h2>
-      <p className="sub">Crea la cuenta y, si quieres, asignale su rol de una vez.</p>
+      <p className="sub">Le llegará un correo de invitación para que cree su contraseña. Asígnale su rol de una vez.</p>
       <form onSubmit={submit}>
         <div className="field"><label>Nombre</label>
           <input className="input" value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre de la persona" required /></div>

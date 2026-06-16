@@ -113,7 +113,16 @@ function NewPaqueteModal({ condominioId, recibidoPor, unidades, onClose, onCreat
       paqueteria: paqueteria.trim() || null, recibido_por: recibidoPor || null, estado: 'en_caseta',
     })
     setBusy(false)
-    if (error) setError(error.message); else onCreated()
+    if (error) { setError(error.message); return }
+    // Notificar por correo al residente (no bloquea la UI)
+    supabase.functions.invoke('enviar-correo', {
+      body: {
+        unidad_id: unidadId,
+        asunto: 'Tienes un paquete en caseta',
+        mensaje: 'Llegó un paquete a tu nombre y está en caseta: ' + (descripcion.trim() || 'paquete') + '. Pásalo a recoger cuando puedas.',
+      },
+    }).catch(() => {})
+    onCreated()
   }
 
   return (
