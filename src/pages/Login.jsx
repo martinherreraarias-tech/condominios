@@ -7,6 +7,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [showPw, setShowPw] = useState(false)
   const navigate = useNavigate()
 
   async function handleLogin(e) {
@@ -56,8 +57,14 @@ export default function Login() {
             </div>
             <div className="field">
               <label htmlFor="password">Contraseña</label>
-              <input id="password" className="input" type="password" autoComplete="current-password"
-                value={password} onChange={(e) => setPassword(e.target.value)} required />
+              <div className="input-wrap">
+                <input id="password" className="input" type={showPw ? 'text' : 'password'} autoComplete="current-password"
+                  value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <button type="button" className="input-toggle" onClick={() => setShowPw((v) => !v)}
+                  aria-label={showPw ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                  {showPw ? <EyeOffIcon /> : <EyeIcon />}
+                </button>
+              </div>
             </div>
             <button className="btn btn--primary btn--block" type="submit" disabled={busy}>
               {busy ? 'Entrando…' : 'Entrar'}
@@ -68,6 +75,24 @@ export default function Login() {
         </div>
       </main>
     </div>
+  )
+}
+
+function EyeIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  )
+}
+
+function EyeOffIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-10-7-10-7a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 10 7 10 7a18.5 18.5 0 0 1-2.16 3.19M1 1l22 22" />
+      <path d="M9.5 9.5a3 3 0 0 0 4.24 4.24" />
+    </svg>
   )
 }
 

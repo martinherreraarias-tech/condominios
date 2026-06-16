@@ -14,6 +14,8 @@ export default function CondominioDetail() {
   const [loading, setLoading] = useState(true)
   const [showNewUnit, setShowNewUnit] = useState(false)
   const [showAssign, setShowAssign] = useState(false)
+  const [editMember, setEditMember] = useState(null)
+  const [deleteMember, setDeleteMember] = useState(null)
 
   async function load() {
     setLoading(true)
@@ -117,7 +119,17 @@ export default function CondominioDetail() {
                         {m.unidad_id && unitById[m.unidad_id] ? ` · ${unitById[m.unidad_id].identificador}` : ''}
                       </div>
                     </div>
-                    <span className="pill pill--brand">{m.rol}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span className="pill pill--brand">{m.rol}</span>
+                      {m.rol === 'residente' && (
+                        <>
+                          <button className="btn btn--ghost" style={{ padding: '6px 10px', fontSize: 13 }}
+                            onClick={() => setEditMember(m)}>Editar</button>
+                          <button className="btn btn--ghost" style={{ padding: '6px 10px', fontSize: 13, color: '#B23B3B', borderColor: '#B23B3B' }}
+                            onClick={() => setDeleteMember(m)}>Eliminar</button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))
               )}
@@ -125,6 +137,23 @@ export default function CondominioDetail() {
           </>
         )}
       </div>
+
+      {editMember && (
+        <EditResidenteModal
+          member={editMember}
+          units={units}
+          onClose={() => setEditMember(null)}
+          onSaved={() => { setEditMember(null); load() }}
+        />
+      )}
+
+      {deleteMember && (
+        <ConfirmDeleteMemberModal
+          member={deleteMember}
+          onClose={() => setDeleteMember(null)}
+          onDone={() => { setDeleteMember(null); load() }}
+        />
+      )}
 
       {showNewUnit && (
         <NewUnitModal
@@ -277,6 +306,74 @@ function AssignResidentModal({ condominioId, units, onClose, onAssigned }) {
           </button>
         </div>
       </form>
+    </Modal>
+  )
+}
+
+function EditResidenteModal({ member, units, onClose, onSaved }) {
+  const [nombre, setNombre] = useState(member.persona?.nombre || '')
+  const [unidadId, setUnidadId] = useState(member.unidad_id || '')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  async function save(e) {
+    e.preventDefault()
+    setBusy(true); setError('')
+    const { error: e1 } = await supabase.rpc('editar_residente', { p_user_id: member.user_id, p_nombre: nombre.trim() })
+    if (e1) { setBusy(false); setError(e1.message); return }
+    const { error: e2 } = await supabase.from('membresias').update({ unidad_id: unidadId || null }).eq('id', member.id)
+    setBusy(false)
+    if (e2) { setError(e2.message); return }
+    onSaved()
+  }
+
+  return (
+    <Modal onClose={onClose}>
+      <h2>Editar residente</h2>
+      <p className="sub">Cambia su nombre o la unidad asignada.</p>
+      <form onSubmit={save}>
+        <div className="field"><label>Nombre</label>
+          <input className="input" value={nombre} onChange={(e) => setNombre(e.target.value)} /></div>
+        <div className="field"><label>Unidad</label>
+          <select className="input" value={unidadId} onChange={(e) => setUnidadId(e.target.value)}>
+            <option value="">Sin unidad</option>
+            {units.map((u) => <option key={u.id} value={u.id}>{u.identificador}</option>)}
+          </select></div>
+        {error && <p className="form-error">{error}</p>}
+        <div className="modal__actions">
+          <button type="button" className="btn btn--ghost" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="btn btn--primary" disabled={busy}>{busy ? 'Guardando…' : 'Guardar'}</button>
+        </div>
+      </form>
+    </Modal>
+  )
+}
+
+function ConfirmDeleteMemberModal({ member, onClose, onDone }) {
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  async function del() {
+    setBusy(true); setError('')
+    const { error } = await supabase.from('membresias').delete().eq('id', member.id)
+    setBusy(false)
+    if (error) { setError(error.message); return }
+    onDone()
+  }
+  return (
+    <Modal onClose={onClose}>
+      <h2>Quitar residente</h2>
+      <p className="sub">
+        Esto quita a <strong>{member.persona?.nombre || member.persona?.email}</strong> de este condominio.
+        Su cuenta de acceso no se borra; podrás volver a asignarlo después con su correo.
+      </p>
+      {error && <p className="form-error">{error}</p>}
+      <div className="modal__actions">
+        <button className="btn btn--ghost" onClick={onClose}>Cancelar</button>
+        <button className="btn btn--primary" disabled={busy} onClick={del}
+          style={{ background: '#B23B3B', borderColor: '#B23B3B' }}>
+          {busy ? 'Quitando…' : 'Quitar del condominio'}
+        </button>
+      </div>
     </Modal>
   )
 }
