@@ -13,6 +13,7 @@ import Reservas from './pages/Reservas'
 import Paqueteria from './pages/Paqueteria'
 import CondominioNotificaciones from './pages/CondominioNotificaciones'
 import EstablecerPassword from './pages/EstablecerPassword'
+import CondominioDashboard from './pages/CondominioDashboard'
 
 function RoleHome() {
   const { role, loading } = useAuth()
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/reservas" element={<ProtectedRoute><Reservas /></ProtectedRoute>} />
           <Route path="/paqueteria" element={<ProtectedRoute><Paqueteria /></ProtectedRoute>} />
           <Route path="/condominio/:id/notificaciones" element={<ProtectedRoute><CondominioNotificaciones /></ProtectedRoute>} />
+          <Route path="/condominio/:id/dashboard" element={<ProtectedRoute><CondominioDashboard /></ProtectedRoute>} />
           <Route path="/visitas" element={<ProtectedRoute><Visitas /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

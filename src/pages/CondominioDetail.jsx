@@ -73,6 +73,7 @@ export default function CondominioDetail() {
                 <p className="page-sub">{cond.direccion || 'Sin dirección'}</p>
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
+                <button className="btn btn--primary" onClick={() => navigate(`/condominio/${id}/dashboard`)}>Dashboard →</button>
                 <button className="btn btn--ghost" onClick={() => navigate(`/condominio/${id}/avisos`)}>Avisos →</button>
                 <button className="btn btn--ghost" onClick={() => navigate(`/condominio/${id}/areas`)}>Áreas →</button>
                 <button className="btn btn--ghost" onClick={() => navigate(`/condominio/${id}/notificaciones`)}>Notificaciones →</button>
