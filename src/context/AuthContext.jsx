@@ -24,7 +24,7 @@ export function AuthProvider({ children }) {
       setLoading(true)
       const { data: prof } = await supabase
         .from('profiles')
-        .select('id, nombre, email, is_super_admin, must_change_password')
+        .select('id, nombre, email, is_super_admin, must_change_password, aviso_aceptado_at')
         .eq('id', session.user.id).single()
       const { data: mem } = await supabase
         .from('membresias')
@@ -39,11 +39,12 @@ export function AuthProvider({ children }) {
 
   const role = profile?.is_super_admin ? 'super_admin' : (memberships[0]?.rol ?? null)
   const mustChangePassword = !!profile?.must_change_password
+  const avisoAceptado = !!profile?.aviso_aceptado_at
 
   const value = {
     session,
     user: session?.user ?? null,
-    profile, memberships, role, loading, mustChangePassword,
+    profile, memberships, role, loading, mustChangePassword, avisoAceptado,
     refreshProfile: () => setReloadFlag((f) => f + 1),
     signOut: () => supabase.auth.signOut(),
   }

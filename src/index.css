@@ -207,3 +207,10 @@ select.input { appearance: none; -webkit-appearance: none; background-image: url
   color: var(--muted, #6b7280); display: flex; align-items: center; border-radius: 8px;
 }
 .input-toggle:hover { color: var(--brand-700, #0B4639); background: rgba(0,0,0,.04); }
+
+/* ===== Texto legal (aviso de privacidad) ===== */
+.legal { color: var(--ink); line-height: 1.6; font-size: 15px; }
+.legal h2 { font-family: var(--font-display); font-size: 18px; margin: 24px 0 8px; color: var(--brand-700); }
+.legal p { margin: 0 0 12px; }
+.legal ul { margin: 0 0 12px 20px; }
+.legal li { margin-bottom: 6px; }

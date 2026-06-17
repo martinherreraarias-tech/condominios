@@ -13,6 +13,7 @@ import Reservas from './pages/Reservas'
 import Paqueteria from './pages/Paqueteria'
 import CondominioNotificaciones from './pages/CondominioNotificaciones'
 import EstablecerPassword from './pages/EstablecerPassword'
+import AvisoPrivacidad from './pages/AvisoPrivacidad'
 import CondominioDashboard from './pages/CondominioDashboard'
 
 function RoleHome() {
@@ -29,6 +30,7 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/establecer-password" element={<EstablecerPassword />} />
+          <Route path="/aviso-privacidad" element={<AvisoPrivacidad />} />
           <Route path="/" element={<ProtectedRoute><RoleHome /></ProtectedRoute>} />
           <Route path="/condominio/:id" element={<ProtectedRoute><CondominioDetail /></ProtectedRoute>} />
           <Route path="/condominio/:id/cobranza" element={<ProtectedRoute><CondominioCobranza /></ProtectedRoute>} />

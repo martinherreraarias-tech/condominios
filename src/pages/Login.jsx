@@ -71,6 +71,9 @@ export default function Login() {
             </button>
             {error && <p className="form-error">{error}</p>}
           </form>
+          <p style={{ textAlign: 'center', marginTop: 10 }}>
+            <a href="/aviso-privacidad" style={{ color: 'var(--muted)', fontSize: 13 }}>Aviso de privacidad</a>
+          </p>
           <p className="auth-credit">FortalezasConsultoria · Soluciones Digitales</p>
         </div>
       </main>
